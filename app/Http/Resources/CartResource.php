@@ -18,7 +18,7 @@ class CartResource extends JsonResource
         return [
             'id' => $this->id,
             'quantity' => $this->quantity,
-            'product' => ProductResource::make(Product::whereId($this->product_id)->get()),
+            'product' => new ProductCollection(Product::whereId($this->product_id)->get()),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

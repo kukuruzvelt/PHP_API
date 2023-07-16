@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use PHPUnit\TextUI\CliArguments\Exception;
 
 /**
  * App\Models\Product
@@ -39,6 +40,7 @@ class Product extends Model
     protected $table = 'products';
 
     protected $visible = [
+        'id',
         'name',
         'price',
         'description',
