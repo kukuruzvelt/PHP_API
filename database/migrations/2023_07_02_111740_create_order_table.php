@@ -16,6 +16,7 @@ return new class extends Migration
             $table->bigInteger('user_id');
             $table->date('date');
             $table->string('city');
+            $table->string('status');
             $table->timestamps();
         });
     }

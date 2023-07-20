@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use function Webmozart\Assert\Tests\StaticAnalysis\integer;
 
 class CartController extends Controller
 {
@@ -33,16 +34,29 @@ class CartController extends Controller
         DB::transaction(function () use ($request) {
             $user_id = $request->user()->id;
             $product_id = $request->product_id;
+            $quantity_to_add = 1;
+            if ($request->has('quantity')) {
+                $quantity_to_add = $request->quantity;
+            }
 
             $product = Product::whereId($product_id)->first();
-            $cart = Cart::whereProductId($product_id)->whereUserId($user_id)->first();
+            $cart = null;
+            if (Cart::whereProductId($product_id)->whereUserId($user_id)->exists()) {
+                $cart = Cart::whereProductId($product_id)->whereUserId($user_id)->first();;
+            } else {
+                $cart = new Cart();
+                $cart->product_id = $product_id;
+                $cart->quantity = 0;
+                $cart->user_id = $user_id;
+                $cart->save();
+            }
 
             $product_quantity = $product->quantity;
-            if ($product_quantity < 1) {
+            if ($product_quantity < $quantity_to_add) {
                 throw new \Exception('Product is out of stock');
             } else {
-                $product->quantity = $product_quantity - 1;
-                $cart->quantity = $cart->quantity + 1;
+                $product->quantity = $product_quantity - $quantity_to_add;
+                $cart->quantity = $cart->quantity + $quantity_to_add;
                 $product->save();
                 $cart->save();
             }
@@ -56,10 +70,13 @@ class CartController extends Controller
             $product_id = $request->product_id;
 
             $product = Product::whereId($product_id)->first();
-            $cart = Cart::whereUserId($user_id)::whereProductId($product_id)->first();
+            $cart = Cart::whereUserId($user_id)->whereProductId($product_id)->first();
 
             if ($cart->quantity < 1) {
                 throw new \Exception('This product is no longer os your cart');
+            } elseif ($cart->quantity == 1) {
+                $product->quantity = $product->quantity + 1;
+                $cart->delete();
             } else {
                 $product->quantity = $product->quantity + 1;
                 $cart->quantity = $cart->quantity - 1;
