@@ -27,7 +27,8 @@ Route::middleware(['auth:sanctum'])->post('/cart/add', [CartController::class, '
 Route::middleware(['auth:sanctum'])->post('/cart/remove', [CartController::class, 'remove']);
 
 Route::middleware(['auth:sanctum'])->post('/order/create', [OrderController::class, 'create']);
-Route::middleware(['auth:sanctum'])->get('/order/get', [OrderController::class, 'get']);
+Route::middleware(['auth:sanctum'])->post('/order/cancel', [OrderController::class, 'cancel']);
+Route::middleware(['auth:sanctum'])->get('/order/getProducts', [OrderController::class, 'getProducts']);
 Route::middleware(['auth:sanctum'])->get('/order/all', [OrderController::class, 'getAll']);
 
 Route::get('/catalog', [CatalogController::class, 'get']);

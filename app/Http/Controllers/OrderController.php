@@ -10,6 +10,7 @@ use App\Models\OrderProduct;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Mockery\Exception;
 
 class OrderController extends Controller
 {
@@ -19,16 +20,14 @@ class OrderController extends Controller
             if ($request->has('city') && $request->has('date')) {
                 $user = $request->user();
 
-                $cart = Cart::whereUserId($user->id)->get();
-                $total_price = 0;
-                foreach ($cart as $cart_instance) {
-                    $total_price += $cart_instance->product->price * $cart_instance->quantity;
-                }
+                $total_price = Cart::whereUserId($user->id)
+                    ->join('products', 'cart.product_id', '=', 'products.id')
+                    ->selectRaw('SUM(products.price * cart.quantity) as total_price')
+                    ->value('total_price');
 
-                if($user->money < $total_price){
+                if ($user->money < $total_price) {
                     throw new \Exception('Not enough money to buy this products');
-                }
-                else{
+                } else {
                     $user->money = $user->money - $total_price;
                     $user->save();
                 }
@@ -40,7 +39,8 @@ class OrderController extends Controller
                 $order->status = 'IN PROGRESS';
                 $order->save();
 
-                foreach ($cart as $cart_instance){
+                $cart = Cart::whereUserId($user->id)->get();
+                foreach ($cart as $cart_instance) {
                     $orderProduct = new OrderProduct();
                     $orderProduct->order_id = $order->id;
                     $orderProduct->product_id = $cart_instance->product_id;
@@ -49,8 +49,7 @@ class OrderController extends Controller
                 }
 
                 Cart::whereUserId($user->id)->delete();
-            }
-            else{
+            } else {
                 throw new \Exception('Some of parameters are missing');
             }
         });
@@ -58,26 +57,31 @@ class OrderController extends Controller
 
     public function cancel(Request $request)
     {
-
+        if ($request->has('order_id')) {
+            $order = Order::whereId($request->order_id)->first();
+            $order->status = "CANCELED";
+            $order->save();
+        } else {
+            throw new \Exception('Some of parameters are missing');
+        }
     }
 
     public function getAll(Request $request): OrderCollection
     {
         $user = $request->user();
-        return new OrderCollection(Order::whereUserId($user->id)->get());
+        return new OrderCollection(Order::whereUserId($user->id)->paginate(env('PAGE_SIZE')));
     }
 
-    public function get(Request $request): ProductCollection
+    public function getProducts(Request $request)
     {
-        if($request->has('order_id')){
-            $order_product = OrderProduct::whereOrderId($request->order_id)->get();
-            $products = [];
-            foreach ($order_product as $order_product_instance){
-                $products[] = Product::whereId($order_product_instance->product_id);
-            }
+        if ($request->has('order_id')) {
+            $products = Product::join('order_product', 'products.id', '=', 'order_product.product_id')
+                ->where('order_product.order_id', $request->order_id)
+                ->select('products.*', 'order_product.quantity')
+                ->get();
+
             return new ProductCollection($products);
-        }
-        else{
+        } else {
             throw new \Exception('Some of parameters are missing');
         }
     }

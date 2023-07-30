@@ -8,23 +8,23 @@ use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use function Webmozart\Assert\Tests\StaticAnalysis\integer;
 
 class CartController extends Controller
 {
     public function get(Request $request): JsonResponse
     {
         $user = $request->user();
-        $cart = Cart::whereUserId($user->id)->get();
-        $total_price = 0;
-        foreach ($cart as $cart_instance) {
-            $total_price += $cart_instance->product->price * $cart_instance->quantity;
-        }
+        $cart = Cart::whereUserId($user->id)->paginate(env('PAGE_SIZE'));
+        $totalPrice = Cart::whereUserId($user->id)
+            ->join('products', 'cart.product_id', '=', 'products.id')
+            ->selectRaw('SUM(products.price * cart.quantity) as total_price')
+            ->value('total_price');
 
         return response()->json([
             'data' => [
                 'cart' => new CartCollection($cart),
-                'total_price' => $total_price,
+                'total_price' => $totalPrice,
+                'last_page' => $cart->lastPage(),
             ]
         ]);
     }
@@ -40,15 +40,18 @@ class CartController extends Controller
             }
 
             $product = Product::whereId($product_id)->first();
-            $cart = null;
             if (Cart::whereProductId($product_id)->whereUserId($user_id)->exists()) {
                 $cart = Cart::whereProductId($product_id)->whereUserId($user_id)->first();;
             } else {
-                $cart = new Cart();
-                $cart->product_id = $product_id;
-                $cart->quantity = 0;
-                $cart->user_id = $user_id;
-                $cart->save();
+                if (Cart::whereUserId($user_id)->count() < env('MAX_CART_SIZE')) {
+                    $cart = new Cart();
+                    $cart->product_id = $product_id;
+                    $cart->quantity = 0;
+                    $cart->user_id = $user_id;
+                    $cart->save();
+                } else {
+                    throw new \Exception('The limit of products in the cart has been exceeded');
+                }
             }
 
             $product_quantity = $product->quantity;

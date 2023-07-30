@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductCollection;
-use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -12,9 +10,7 @@ class CatalogController extends Controller
 {
     public function get(Request $request): ProductCollection
     {
-        //todo move this to CatalogController
-        //todo don't return product with quantity 0
-        $query = Product::query();
+        $query = Product::query()->where('quantity', '>', 0);
 
         if ($request->has('category') && $request->category != '') {
             $query->where('category_id', $request->category);
