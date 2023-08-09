@@ -27,4 +27,9 @@ class Category extends Model
     use HasFactory;
 
     protected $table = 'categories';
+
+    protected $hidden = [
+        'created_at',
+        'updated_at'
+    ];
 }

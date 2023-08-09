@@ -4,13 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use mysql_xdevapi\Exception;
+use OpenApi\Attributes as OA;
 
 class RegisteredUserController extends Controller
 {
@@ -19,6 +17,22 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
+    #[OA\Post(path: '/register', description: 'Endpoint for registration,
+    you should first make a request to the /sanctum/csrf-cookie endpoint to initialize CSRF protection for the application'
+        ,tags: ['auth'])]
+    #[OA\RequestBody(content: [
+        new OA\MediaType(mediaType: 'application/json', schema: new OA\Schema(properties: [
+            new OA\Property(property: 'first_name', description: 'First name', type: 'string'),
+            new OA\Property(property: 'last_name', description: 'Last name', type: 'string'),
+            new OA\Property(property: 'email', description: 'Email', type: 'string'),
+            new OA\Property(property: 'password', description: 'Password', type: 'string'),
+        ]
+            , example: [
+                '{"first_name": "Name", "last_name": "Surname", "email": "test@mail.com", "password": "123456"}',
+            ],))
+    ])]
+    #[OA\Response(response: 204, description: 'Successful registration')]
+    #[OA\Response(response: 422, description: 'An error occurred during registration, the error message is attached')]
     public function store(Request $request): Response
     {
 
@@ -26,7 +40,7 @@ class RegisteredUserController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class],
-            'password' => ['required', Rules\Password::min(2)],
+            'password' => ['required', Rules\Password::min(6)],
         ]);
 
         $user = new User([
@@ -36,11 +50,7 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        try {
-            $user->save();
-        } catch (\Exception $e) {
-            error_log($e->getMessage());
-        }
+        $user->save();
 
         //event(new Registered($user));
         //Auth::login($user);

@@ -10,10 +10,23 @@ use App\Models\OrderProduct;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Mockery\Exception;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'order')]
 class OrderController extends Controller
 {
+    #[OA\Post(path: '/api/order/create', description: 'Endpoint for creating order for logged user'
+        , security: ["sanctum"], tags: ['order'])]
+    #[OA\RequestBody(content: [
+        new OA\MediaType(mediaType: 'application/json', schema: new OA\Schema(properties: [
+            new OA\Property(property: 'city', description: 'City for products to be delivered to', type: 'string'),
+            new OA\Property(property: 'date', description: 'Date of delivery', type: 'string'),
+        ]
+            , example: [
+                '{"city": "Kyiv", "date": "2023-07-28"}',
+            ],))
+    ])]
+    #[OA\Response(response: 200, description: 'OK')]
     public function create(Request $request): void
     {
         DB::transaction(function () use ($request) {
@@ -55,8 +68,20 @@ class OrderController extends Controller
         });
     }
 
+    #[OA\Post(path: '/api/order/cancel', description: 'Endpoint for cancelling logged user\'s order', security: ["sanctum"]
+        , tags: ['order'])]
+    #[OA\RequestBody(content: [
+        new OA\MediaType(mediaType: 'application/json', schema: new OA\Schema(properties: [
+            new OA\Property(property: 'order_id', description: 'ID of order to be canceled', type: 'string'),
+        ]
+            , example: [
+                '{"order_id": "1"}',
+            ],))
+    ])]
+    #[OA\Response(response: 200, description: 'OK')]
     public function cancel(Request $request)
     {
+        //todo create error for case, when there is no order with given id and add it to the docs
         if ($request->has('order_id')) {
             $order = Order::whereId($request->order_id)->first();
             $order->status = "CANCELED";
@@ -66,14 +91,25 @@ class OrderController extends Controller
         }
     }
 
+    #[OA\Get(path: '/order/all', description: 'List of paginated orders for logged user', security: ["sanctum"]
+        , tags: ['order'])]
+    #[OA\QueryParameter(name: 'page', description: 'Number of page for paginated list of products in cart',
+        required: true, allowEmptyValue: false)]
+    #[OA\Response(response: 200, description: 'OK')]
     public function getAll(Request $request): OrderCollection
     {
         $user = $request->user();
         return new OrderCollection(Order::whereUserId($user->id)->paginate(env('PAGE_SIZE')));
     }
 
+    #[OA\Get(path: '/order/getProducts', description: 'List of products in the order of logged user', security: ["sanctum"]
+        , tags: ['order'])]
+    #[OA\QueryParameter(name: 'order_id', description: 'ID of chosen order', required: true, allowEmptyValue: false)]
+    #[OA\Response(response: 200, description: 'OK')]
     public function getProducts(Request $request)
     {
+        //todo create error for case, when there is no order with given id and add it to the docs
+        //todo replace manual checks of request params with validate()
         if ($request->has('order_id')) {
             $products = Product::join('order_product', 'products.id', '=', 'order_product.product_id')
                 ->where('order_product.order_id', $request->order_id)

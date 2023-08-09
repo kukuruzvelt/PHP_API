@@ -31,4 +31,9 @@ class Order extends Model
 {
     use HasFactory;
     protected $table = 'order';
+
+    protected $hidden = [
+        'created_at',
+        'updated_at'
+    ];
 }

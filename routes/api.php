@@ -7,6 +7,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use OpenApi\Attributes as OA;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,5 +38,3 @@ Route::get('/product', [ProductController::class, 'get']);
 
 Route::get('/category/all', [CategoryController::class, 'getAll']);
 Route::get('/category', [CategoryController::class, 'get']);
-
-

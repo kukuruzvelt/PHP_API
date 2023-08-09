@@ -8,9 +8,16 @@ use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'cart')]
 class CartController extends Controller
 {
+    #[OA\Get(path: '/api/cart', description: 'Returns paginated list of products in logged user\'s cart,
+    total price of all products in cart, and last page number for pagination purposes', security: ["sanctum"], tags: ['cart'])]
+    #[OA\QueryParameter(name: 'page', description: 'Number of page for paginated list of products in cart',
+        required: true, allowEmptyValue: false)]
+    #[OA\Response(response: 200, description: 'OK')]
     public function get(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -29,6 +36,20 @@ class CartController extends Controller
         ]);
     }
 
+    #[OA\Post(path: '/api/cart/add', description: 'Endpoint for adding given amount of chosen product to logged user\'s cart'
+        , security: ["sanctum"], tags: ['cart'])]
+    #[OA\RequestBody(content: [
+        new OA\MediaType(mediaType: 'application/json', schema: new OA\Schema(properties: [
+            new OA\Property(property: 'product_id', description: 'ID of product to be added', type: 'string'),
+            new OA\Property(property: 'quantity', description: 'Amount of product to add', type: 'string'),
+        ]
+            , example: [
+                '{"product_id": "1"}',
+                '{{"product_id": "1", "quantity": "3"}}'
+            ],))
+    ])]
+    #[OA\Response(response: 200, description: 'OK')]
+    #[OA\Response(response: 500, description: 'Product is out of stock | The limit of products in the cart has been exceeded')]
     public function add(Request $request): void
     {
         DB::transaction(function () use ($request) {
@@ -66,6 +87,18 @@ class CartController extends Controller
         });
     }
 
+    #[OA\Post(path: '/api/cart/remove', description: 'Endpoint for removing one piece of product from logged user\'s cart'
+        , security: ["sanctum"], tags: ['cart'])]
+    #[OA\RequestBody(content: [
+        new OA\MediaType(mediaType: 'application/json', schema: new OA\Schema(properties: [
+            new OA\Property(property: 'product_id', description: 'ID of product to be removed', type: 'string'),
+        ]
+            , example: [
+                '{"product_id": "1"}',
+            ],))
+    ])]
+    #[OA\Response(response: 200, description: 'OK')]
+    #[OA\Response(response: 500, description: 'This product is no longer os your cart')]
     public function remove(Request $request): void
     {
         DB::transaction(function () use ($request) {
