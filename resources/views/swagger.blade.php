@@ -23,7 +23,7 @@
     <script>
         window.onload = function () {
             const ui = SwaggerUIBundle({
-                spec: {!! json_encode(Symfony\Component\Yaml\Yaml::parseFile(base_path('openapi.yaml'))) !!},
+                spec: {!! json_encode(Symfony\Component\Yaml\Yaml::parseFile(base_path('swagger/openapi.yaml'))) !!},
                 dom_id: '#swagger-ui',
                 presets: [
                     SwaggerUIBundle.presets.apis,
