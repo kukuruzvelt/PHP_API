@@ -36,8 +36,8 @@ class CatalogController extends Controller
         }
 
         if ($request->has('text') && $request->text != '') {
-            //todo split string by _ to search for name with multiple words in it
-            $query->where('name', 'like', '%' . $request->text . '%');
+            $text = strtolower(str_replace('_', ' ', $request->text));
+            $query->where('name', 'like', '%' . $text . '%');
         }
 
         if ($request->has('sort') && $request->sort != '') {

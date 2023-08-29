@@ -71,13 +71,13 @@ class CartController extends Controller
                     $cart->user_id = $user_id;
                     $cart->save();
                 } else {
-                    throw new \Exception('The limit of products in the cart has been exceeded');
+                    throw new \Exception(trans('messages.limit_of_products'));
                 }
             }
 
             $product_quantity = $product->quantity;
             if ($product_quantity < $quantity_to_add) {
-                throw new \Exception('Product is out of stock');
+                throw new \Exception(trans('messages.product_out_of_stock'));
             } else {
                 $product->quantity = $product_quantity - $quantity_to_add;
                 $cart->quantity = $cart->quantity + $quantity_to_add;
@@ -109,7 +109,7 @@ class CartController extends Controller
             $cart = Cart::whereUserId($user_id)->whereProductId($product_id)->first();
 
             if ($cart->quantity < 1) {
-                throw new \Exception('This product is no longer os your cart');
+                throw new \Exception(trans('messages.no_longer_in_cart'));
             } elseif ($cart->quantity == 1) {
                 $product->quantity = $product->quantity + 1;
                 $cart->delete();

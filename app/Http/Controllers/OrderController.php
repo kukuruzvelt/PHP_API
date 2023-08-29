@@ -39,7 +39,7 @@ class OrderController extends Controller
                     ->value('total_price');
 
                 if ($user->money < $total_price) {
-                    throw new \Exception('Not enough money to buy this products');
+                    throw new \Exception(trans('messages.not_enough_money'));
                 } else {
                     $user->money = $user->money - $total_price;
                     $user->save();
@@ -63,7 +63,7 @@ class OrderController extends Controller
 
                 Cart::whereUserId($user->id)->delete();
             } else {
-                throw new \Exception('Some of parameters are missing');
+                throw new \Exception(trans('messages.some_params_missing'));
             }
         });
     }
@@ -87,7 +87,7 @@ class OrderController extends Controller
             $order->status = "CANCELED";
             $order->save();
         } else {
-            throw new \Exception('Some of parameters are missing');
+            throw new \Exception(trans('messages.some_params_missing'));
         }
     }
 
@@ -118,7 +118,7 @@ class OrderController extends Controller
 
             return new ProductCollection($products);
         } else {
-            throw new \Exception('Some of parameters are missing');
+            throw new \Exception(trans('messages.some_params_missing'));
         }
     }
 }

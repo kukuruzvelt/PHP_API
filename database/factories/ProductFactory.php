@@ -18,11 +18,11 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => "Product " . fake()->unique()->numberBetween(1, 10000),
+            'name' => "Product " . fake()->unique()->numberBetween(1, env('PRODUCT_NUM_TO_SEED')*10),
             'price' => fake()->numberBetween(100, 10000),
             'description' => fake()->text(100),
             'quantity' => fake()->numberBetween(0, 100),
-            'category_id' => fake()->numberBetween(1, 5),
+            'category_id' => fake()->numberBetween(1, env('CATEGORY_NUM_TO_SEED')),
         ];
     }
 }

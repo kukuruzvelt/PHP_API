@@ -18,7 +18,7 @@ class CategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => "Category" . fake()->unique()->numberBetween(1, 5),
+            'name' => "Category" . fake()->unique()->numberBetween(1, env('CATEGORY_NUM_TO_SEED')),
         ];
     }
 }

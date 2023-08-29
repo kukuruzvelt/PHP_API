@@ -36,7 +36,7 @@ class UserController extends Controller
             $user->save();
         }
         else {
-            throw new \Exception('Some of parameters are missing');
+            throw new \Exception(trans('messages.some_params_missing'));
         }
     }
 

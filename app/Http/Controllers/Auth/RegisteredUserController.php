@@ -15,7 +15,6 @@ class RegisteredUserController extends Controller
     /**
      * Handle an incoming registration request.
      *
-     * @throws \Illuminate\Validation\ValidationException
      */
     #[OA\Post(path: '/register', description: 'Endpoint for registration,
     you should first make a request to the /sanctum/csrf-cookie endpoint to initialize CSRF protection for the application'
@@ -32,14 +31,15 @@ class RegisteredUserController extends Controller
             ],))
     ])]
     #[OA\Response(response: 204, description: 'Successful registration')]
-    #[OA\Response(response: 422, description: 'An error occurred during registration, the error message is attached')]
+    #[OA\Response(response: 302, description: 'Validation failed')]
+    #[OA\Response(response: 422, description: 'Email already taken')]
     public function store(Request $request): Response
     {
 
         $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class],
+            'first_name' => ['required', 'string', 'max:255', 'min:1'],
+            'last_name' => ['required', 'string', 'max:255', 'min:1'],
+            'email' => ['required', 'string', 'email', 'max:255', 'min:3', 'unique:' . User::class],
             'password' => ['required', Rules\Password::min(6)],
         ]);
 
@@ -51,9 +51,6 @@ class RegisteredUserController extends Controller
         ]);
 
         $user->save();
-
-        //event(new Registered($user));
-        //Auth::login($user);
 
         return response()->noContent();
     }

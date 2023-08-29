@@ -21,8 +21,8 @@ class ProductController extends Controller
             if(Product::whereId($request->id)->exists()){
                 return new ProductResource(Product::whereId($request->id)->first());
             }
-            else throw new \Exception('No product with such id');
+            else throw new \Exception(trans('messages.no_product_with_such_id'));
         }
-        else throw new \Exception('No parameters were passed');
+        else throw new \Exception(trans('messages.no_params_passed'));
     }
 }

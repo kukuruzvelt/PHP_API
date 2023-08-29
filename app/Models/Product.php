@@ -45,10 +45,10 @@ class Product extends Model
         'price',
         'description',
         'quantity',
+        'category_id'
     ];
 
     protected $hidden = [
-        'category_id',
         'created_at',
         'updated_at'
     ];
