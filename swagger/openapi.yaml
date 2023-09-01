@@ -72,8 +72,10 @@ paths:
       responses:
         '204':
           description: 'Successful registration'
+        '302':
+          description: 'Validation failed'
         '422':
-          description: 'An error occurred during registration, the error message is attached'
+          description: 'Email already taken'
   /api/cart:
     get:
       tags:
@@ -117,8 +119,10 @@ paths:
       responses:
         '200':
           description: OK
-        '500':
-          description: 'Product is out of stock | The limit of products in the cart has been exceeded'
+        '429':
+          description: 'The limit of products in the cart has been exceeded'
+        '404':
+          description: 'Product is out of stock'
       security:
         -
           scalar: sanctum
@@ -142,7 +146,7 @@ paths:
       responses:
         '200':
           description: OK
-        '500':
+        '404':
           description: 'This product is no longer os your cart'
       security:
         -
@@ -214,7 +218,9 @@ paths:
       responses:
         '200':
           description: OK
-        '500':
+        '400':
+          description: 'No parameters were passed'
+        '404':
           description: 'No category with such id'
   /api/category/all:
     get:
@@ -248,6 +254,10 @@ paths:
       responses:
         '200':
           description: OK
+        '402':
+          description: 'Not enough money to buy this products'
+        '400':
+          description: 'Some of parameters are missing'
       security:
         -
           scalar: sanctum
@@ -271,6 +281,10 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: 'No order with such id'
+        '400':
+          description: 'Some of parameters are missing'
       security:
         -
           scalar: sanctum
@@ -309,6 +323,10 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: 'No order with such id'
+        '400':
+          description: 'Some of parameters are missing'
       security:
         -
           scalar: sanctum
@@ -328,8 +346,10 @@ paths:
       responses:
         '200':
           description: OK
-        '500':
+        '404':
           description: 'No product with such id'
+        '400':
+          description: 'No parameters were passed'
   /api/user:
     get:
       tags:
@@ -362,6 +382,8 @@ paths:
       responses:
         '200':
           description: OK
+        '400':
+          description: 'Some of parameters are missing'
       security:
         -
           scalar: sanctum

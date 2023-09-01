@@ -27,6 +27,8 @@ class OrderController extends Controller
             ],))
     ])]
     #[OA\Response(response: 200, description: 'OK')]
+    #[OA\Response(response: 402, description: 'Not enough money to buy this products')]
+    #[OA\Response(response: 400, description: 'Some of parameters are missing')]
     public function create(Request $request): void
     {
         DB::transaction(function () use ($request) {
@@ -39,7 +41,7 @@ class OrderController extends Controller
                     ->value('total_price');
 
                 if ($user->money < $total_price) {
-                    throw new \Exception(trans('messages.not_enough_money'));
+                    return response()->json(data: ['error_message' => trans('messages.not_enough_money')], status: 402);
                 } else {
                     $user->money = $user->money - $total_price;
                     $user->save();
@@ -63,7 +65,7 @@ class OrderController extends Controller
 
                 Cart::whereUserId($user->id)->delete();
             } else {
-                throw new \Exception(trans('messages.some_params_missing'));
+                return response()->json(data: ['error_message' => trans('messages.some_params_missing')], status: 400);
             }
         });
     }
@@ -79,16 +81,17 @@ class OrderController extends Controller
             ],))
     ])]
     #[OA\Response(response: 200, description: 'OK')]
+    #[OA\Response(response: 404, description: 'No order with such id')]
+    #[OA\Response(response: 400, description: 'Some of parameters are missing')]
     public function cancel(Request $request)
     {
-        //todo create error for case, when there is no order with given id and add it to the docs
         if ($request->has('order_id')) {
-            $order = Order::whereId($request->order_id)->first();
-            $order->status = "CANCELED";
-            $order->save();
-        } else {
-            throw new \Exception(trans('messages.some_params_missing'));
-        }
+            if (Order::whereId($request->order_id)->exists()) {
+                $order = Order::whereId($request->order_id)->first();
+                $order->status = "CANCELED";
+                $order->save();
+            } else return response()->json(data: ['error_message' => trans('no_order_with_such_id')], status: 404);
+        } else return response()->json(data: ['error_message' => trans('messages.some_params_missing')], status: 400);
     }
 
     #[OA\Get(path: '/order/all', description: 'List of paginated orders for logged user', security: ["sanctum"]
@@ -106,19 +109,18 @@ class OrderController extends Controller
         , tags: ['order'])]
     #[OA\QueryParameter(name: 'order_id', description: 'ID of chosen order', required: true, allowEmptyValue: false)]
     #[OA\Response(response: 200, description: 'OK')]
+    #[OA\Response(response: 404, description: 'No order with such id')]
+    #[OA\Response(response: 400, description: 'Some of parameters are missing')]
     public function getProducts(Request $request)
     {
-        //todo create error for case, when there is no order with given id and add it to the docs
-        //todo replace manual checks of request params with validate()
         if ($request->has('order_id')) {
-            $products = Product::join('order_product', 'products.id', '=', 'order_product.product_id')
-                ->where('order_product.order_id', $request->order_id)
-                ->select('products.*', 'order_product.quantity')
-                ->get();
-
-            return new ProductCollection($products);
-        } else {
-            throw new \Exception(trans('messages.some_params_missing'));
-        }
+            if (Order::whereId($request->order_id)->exists()) {
+                $products = Product::join('order_product', 'products.id', '=', 'order_product.product_id')
+                    ->where('order_product.order_id', $request->order_id)
+                    ->select('products.*', 'order_product.quantity')
+                    ->get();
+                return new ProductCollection($products);
+            } else return response()->json(data: ['error_message' => trans('no_order_with_such_id')], status: 404);
+        } else return response()->json(data: ['error_message' => trans('messages.some_params_missing')], status: 400);
     }
 }

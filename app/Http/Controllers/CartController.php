@@ -28,11 +28,9 @@ class CartController extends Controller
             ->value('total_price');
 
         return response()->json([
-            'data' => [
-                'cart' => new CartCollection($cart),
-                'total_price' => $totalPrice,
-                'last_page' => $cart->lastPage(),
-            ]
+            'cart' => new CartCollection($cart),
+            'total_price' => $totalPrice,
+            'last_page' => $cart->lastPage(),
         ]);
     }
 
@@ -49,42 +47,60 @@ class CartController extends Controller
             ],))
     ])]
     #[OA\Response(response: 200, description: 'OK')]
-    #[OA\Response(response: 500, description: 'Product is out of stock | The limit of products in the cart has been exceeded')]
-    public function add(Request $request): void
+    #[OA\Response(response: 429, description: 'The limit of products in the cart has been exceeded')]
+    #[OA\Response(response: 409, description: 'Product is out of stock')]
+    #[OA\Response(response: 404, description: 'No product with such id')]
+    public function add(Request $request): JsonResponse
     {
-        DB::transaction(function () use ($request) {
-            $user_id = $request->user()->id;
-            $product_id = $request->product_id;
-            $quantity_to_add = 1;
-            if ($request->has('quantity')) {
-                $quantity_to_add = $request->quantity;
-            }
-
-            $product = Product::whereId($product_id)->first();
-            if (Cart::whereProductId($product_id)->whereUserId($user_id)->exists()) {
-                $cart = Cart::whereProductId($product_id)->whereUserId($user_id)->first();;
-            } else {
-                if (Cart::whereUserId($user_id)->count() < env('MAX_CART_SIZE')) {
-                    $cart = new Cart();
-                    $cart->product_id = $product_id;
-                    $cart->quantity = 0;
-                    $cart->user_id = $user_id;
-                    $cart->save();
-                } else {
-                    throw new \Exception(trans('messages.limit_of_products'));
+        try {
+            DB::transaction(function () use ($request) {
+                $user_id = $request->user()->id;
+                $product_id = $request->product_id;
+                $quantity_to_add = 1;
+                if ($request->has('quantity')) {
+                    $quantity_to_add = $request->quantity;
                 }
-            }
 
-            $product_quantity = $product->quantity;
-            if ($product_quantity < $quantity_to_add) {
-                throw new \Exception(trans('messages.product_out_of_stock'));
-            } else {
-                $product->quantity = $product_quantity - $quantity_to_add;
-                $cart->quantity = $cart->quantity + $quantity_to_add;
-                $product->save();
-                $cart->save();
+                if (Product::whereId($product_id)->exists()) {
+                    $product = Product::whereId($product_id)->first();
+                } else {
+                    throw new \Exception(code: 404);
+                }
+
+                if (Cart::whereProductId($product_id)->whereUserId($user_id)->exists()) {
+                    $cart = Cart::whereProductId($product_id)->whereUserId($user_id)->first();;
+                } else {
+                    if (Cart::whereUserId($user_id)->count() < env('MAX_CART_SIZE')) {
+                        $cart = new Cart();
+                        $cart->product_id = $product_id;
+                        $cart->quantity = 0;
+                        $cart->user_id = $user_id;
+                        $cart->save();
+                    } else {
+                        throw new \Exception(code: 429);
+                    }
+                }
+
+                $product_quantity = $product->quantity;
+                if ($product_quantity < $quantity_to_add) {
+                    throw new \Exception(code: 409);
+                } else {
+                    $product->quantity = $product_quantity - $quantity_to_add;
+                    $cart->quantity = $cart->quantity + $quantity_to_add;
+                    $product->save();
+                    $cart->save();
+                }
+            });
+        } catch (\Exception $e) {
+            if ($e->getCode() == 409) {
+                return response()->json(data: ['error_message' => trans('messages.product_out_of_stock')], status: 404);
+            } elseif ($e->getCode() == 429) {
+                return response()->json(data: ['error_message' => trans('messages.limit_of_products')], status: 429);
+            } elseif ($e->getCode() == 404) {
+                return response()->json(data: ['error_message' => trans('messages.no_product_with_such_id')], status: 404);
             }
-        });
+        }
+        return response()->json();
     }
 
     #[OA\Post(path: '/api/cart/remove', description: 'Endpoint for removing one piece of product from logged user\'s cart'
@@ -98,27 +114,44 @@ class CartController extends Controller
             ],))
     ])]
     #[OA\Response(response: 200, description: 'OK')]
-    #[OA\Response(response: 500, description: 'This product is no longer os your cart')]
-    public function remove(Request $request): void
+    #[OA\Response(response: 409, description: 'No product with such id in cart')]
+    #[OA\Response(response: 404, description: 'No product with such id')]
+    public function remove(Request $request): JsonResponse
     {
-        DB::transaction(function () use ($request) {
-            $user_id = $request->user()->id;
-            $product_id = $request->product_id;
+        try {
+            DB::transaction(function () use ($request) {
+                $user_id = $request->user()->id;
+                $product_id = $request->product_id;
 
-            $product = Product::whereId($product_id)->first();
-            $cart = Cart::whereUserId($user_id)->whereProductId($product_id)->first();
+                if (Product::whereId($product_id)->exists()) {
+                    $product = Product::whereId($product_id)->first();
+                } else {
+                    throw new \Exception(code: 404);
+                }
 
-            if ($cart->quantity < 1) {
-                throw new \Exception(trans('messages.no_longer_in_cart'));
-            } elseif ($cart->quantity == 1) {
+                if (Cart::whereUserId($user_id)->whereProductId($product_id)->exists()) {
+                    $cart = Cart::whereUserId($user_id)->whereProductId($product_id)->first();
+                } else {
+                    throw new \Exception(code: 409);
+                }
+
                 $product->quantity = $product->quantity + 1;
-                $cart->delete();
-            } else {
-                $product->quantity = $product->quantity + 1;
-                $cart->quantity = $cart->quantity - 1;
                 $product->save();
-                $cart->save();
+                if ($cart->quantity == 1) {
+                    $cart->delete();
+                } else {
+                    $cart->quantity = $cart->quantity - 1;
+                    $cart->save();
+                }
+            });
+        } catch (\Exception $e) {
+            if ($e->getCode() == 409) {
+                return response()->json(data: ['error_message' => trans('messages.no_product_with_such_id_in_cart')]
+                    , status: 409);
+            } elseif ($e->getCode() == 404) {
+                return response()->json(data: ['error_message' => trans('messages.no_product_with_such_id')], status: 404);
             }
-        });
+        }
+        return response()->json();
     }
 }

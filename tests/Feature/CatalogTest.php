@@ -35,7 +35,7 @@ class CatalogTest extends TestCase
 
     public function test_page_param(): void
     {
-        $page_num = 2;
+        $page_num = 1;
 
         $response = $this->get('/api/catalog/?page=' . $page_num);
 
@@ -44,11 +44,13 @@ class CatalogTest extends TestCase
         $response->assertStatus(200);
     }
 
+
     public function test_category_param(): void
     {
-        $response = $this->get('/api/catalog/?page=1&category=3');
+        $category_id = 1;
 
-        $category_id = 3;
+        $response = $this->get('/api/catalog/?page=1&category=' . $category_id);
+
 
         $response->assertJson(fn(AssertableJson $json) => $json->has('data',
             fn(AssertableJson $json) => $json->each(fn(AssertableJson $json) => $json->where('category_id', $category_id)->etc()))
@@ -56,6 +58,10 @@ class CatalogTest extends TestCase
             ->assertStatus(200);
     }
 
+    /**
+     * Be aware, that seeded product names can not contain '1' in name, if env('PRODUCT_NUM_TO_SEED') is too low,
+     * @see ProductSeeder for seeding rules
+     */
     public function test_single_word_text_param(): void
     {
         $search_for = '1';
@@ -69,8 +75,14 @@ class CatalogTest extends TestCase
             ->assertStatus(200);
     }
 
+
+    /**
+     * Be aware, that seeded product names can not contain 'product' and '1' in name, if env('PRODUCT_NUM_TO_SEED') is too low,
+     * @see ProductSeeder for seeding rules
+     */
     public function test_multiple_words_text_param(): void
     {
+
         $search_for_first = 'product';
         $search_for_second = '1';
 

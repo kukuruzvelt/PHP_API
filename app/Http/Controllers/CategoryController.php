@@ -14,14 +14,17 @@ class CategoryController extends Controller
     #[OA\Get(path: '/api/category', description: '', tags: ['category'])]
     #[OA\QueryParameter(name: 'id', description: 'ID of category', required: true, allowEmptyValue: false)]
     #[OA\Response(response: 200, description: 'OK',)]
-    #[OA\Response(response: 500, description: 'No category with such id',)]
+    #[OA\Response(response: 400, description: 'No parameters were passed',)]
+    #[OA\Response(response: 404, description: 'No category with such id',)]
     public function get(Request $request)
     {
         if ($request->has('id') && $request->id != '') {
             if (Category::whereId($request->id)->exists()) {
                 return new CategoryResource(Category::whereId($request->id)->first());
-            } else throw new \Exception(trans('messages.no_category_with_such_id'));
-        } else throw new \Exception(trans('messages.no_params_passed'));
+            }
+            else return response()->json(data: ['error_message' => trans('messages.no_category_with_such_id')], status: 404);
+        }
+        else return response()->json(data: ['error_message' => trans('messages.no_params_passed')], status: 400);
     }
 
     #[OA\Get(path: '/api/category/all', description: 'List of all categories', tags: ['category'])]

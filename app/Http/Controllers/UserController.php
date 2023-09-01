@@ -27,17 +27,15 @@ class UserController extends Controller
             ],))
     ])]
     #[OA\Response(response: 200, description: 'OK')]
-    public function pay(Request $request): void
-    {
+    #[OA\Response(response: 400, description: 'Some of parameters are missing')]
+    public function pay(Request $request){
         if($request->has('money_amount')){
             $user = User::whereId($request->user()->id)->first();
             $money = $user->money;
             $user->money =  $money + $request->money_amount;
             $user->save();
         }
-        else {
-            throw new \Exception(trans('messages.some_params_missing'));
-        }
+        else return response()->json(data: ['error_message' => trans('messages.some_params_missing')], status: 400);
     }
 
 }
