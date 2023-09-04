@@ -2,13 +2,12 @@
 
 namespace Database\Factories;
 
-use Database\Seeders\UserSeeder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Cart>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
  */
-class CartFactory extends Factory
+class OrderFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -22,8 +21,9 @@ class CartFactory extends Factory
          */
         return [
             'user_id' => 1,
-            'product_id' => fake()->unique()->numberBetween(1, env('PRODUCT_NUM_TO_SEED')),
-            'quantity' => fake()->numberBetween(0, 10),
+            'date' => fake()->date(),
+            'city' => fake()->city(),
+            'status' => 'IN_PROGRESS',
         ];
     }
 }

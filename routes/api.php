@@ -21,7 +21,7 @@ use OpenApi\Attributes as OA;
 */
 
 Route::middleware(['auth:sanctum'])->get('/user', [UserController::class, 'get']);
-Route::middleware(['auth:sanctum'])->post('/pay', [UserController::class, 'pay']);
+Route::middleware(['auth:sanctum'])->post('/user/pay', [UserController::class, 'pay']);
 
 Route::middleware(['auth:sanctum'])->get('/cart', [CartController::class, 'get']);
 Route::middleware(['auth:sanctum'])->post('/cart/add', [CartController::class, 'add']);

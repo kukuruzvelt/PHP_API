@@ -2,16 +2,26 @@
 
 namespace Tests\Traits;
 
+use App\Models\User;
 use Illuminate\Tests\Foundation\Testing\TestCaseWithTrait;
 use Tests\TestCase;
+use function Symfony\Component\String\u;
 
 trait Authentication
 {
-    public function login($user)
+    public function getLoggedUser()
     {
-        return $this->post('/login', [
+        //Has already been seeded
+        $user = User::whereId(1)->first();
+
+        //Authenticating user
+        $response = $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
+
+        $this->assertAuthenticated();
+
+        return $user;
     }
 }

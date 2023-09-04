@@ -17,7 +17,7 @@ class CartTest extends TestCase
 
     public function test_getting_cart(): void
     {
-        $user = $this->getUser();
+        $user = $this->getLoggedUser();
 
         $response = $this->get('/api/cart/?page=1');
 
@@ -30,7 +30,7 @@ class CartTest extends TestCase
 
     public function test_adding_to_cart()
     {
-        $user = $this->getUser();
+        $user = $this->getLoggedUser();
 
         $product = Product::factory()->create();
         $quantity = 5;
@@ -44,7 +44,7 @@ class CartTest extends TestCase
 
     public function test_adding_with_no_quantity_specified()
     {
-        $user = $this->getUser();
+        $user = $this->getLoggedUser();
 
         $product = Product::factory()->create();
 
@@ -57,7 +57,7 @@ class CartTest extends TestCase
 
     public function test_exceeding_cart_limit()
     {
-        $user = $this->getUser();
+        $user = $this->getLoggedUser();
 
         while (Cart::whereUserId($user->id)->count() < env('MAX_CART_SIZE')) {
             Cart::factory()->create()->save();
@@ -73,7 +73,7 @@ class CartTest extends TestCase
 
     public function test_product_out_of_stock()
     {
-        $user = $this->getUser();
+        $user = $this->getLoggedUser();
 
         $product = Product::factory()->create();
 
@@ -85,7 +85,7 @@ class CartTest extends TestCase
 
     public function test_removing_from_cart()
     {
-        $user = $this->getUser();
+        $user = $this->getLoggedUser();
 
         $product = Product::whereId(Cart::whereUserId($user->id)->first()->product_id)->first();
         $product_quantity_in_cart_before_removing = Cart::whereUserId($user->id)->whereProductId($product->id)->first()->quantity;
@@ -101,7 +101,7 @@ class CartTest extends TestCase
 
     public function test_removing_product_that_is_not_in_the_cart()
     {
-        $user = $this->getUser();
+        $user = $this->getLoggedUser();
 
         $product = Product::factory()->create();
 
@@ -114,7 +114,7 @@ class CartTest extends TestCase
 
     public function test_removing_non_existing_product()
     {
-        $user = $this->getUser();
+        $user = $this->getLoggedUser();
 
         $product = Product::factory()->create();
 
@@ -126,7 +126,7 @@ class CartTest extends TestCase
 
     public function test_adding_non_existing_product()
     {
-        $user = $this->getUser();
+        $user = $this->getLoggedUser();
 
         $product = Product::factory()->create();
 
@@ -137,15 +137,4 @@ class CartTest extends TestCase
     }
 
 
-    public function getUser()
-    {
-        //Has already been seeded
-        $user = User::whereId(1)->first();
-
-        //Authenticating user
-        $this->login($user);
-        $this->assertAuthenticated();
-
-        return $user;
-    }
 }

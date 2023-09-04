@@ -121,8 +121,10 @@ paths:
           description: OK
         '429':
           description: 'The limit of products in the cart has been exceeded'
-        '404':
+        '409':
           description: 'Product is out of stock'
+        '404':
+          description: 'No product with such id'
       security:
         -
           scalar: sanctum
@@ -146,8 +148,10 @@ paths:
       responses:
         '200':
           description: OK
+        '409':
+          description: 'No product with such id in cart'
         '404':
-          description: 'This product is no longer os your cart'
+          description: 'No product with such id'
       security:
         -
           scalar: sanctum
@@ -284,7 +288,7 @@ paths:
         '404':
           description: 'No order with such id'
         '400':
-          description: 'Some of parameters are missing'
+          description: 'No parameters were passed'
       security:
         -
           scalar: sanctum
@@ -326,7 +330,7 @@ paths:
         '404':
           description: 'No order with such id'
         '400':
-          description: 'Some of parameters are missing'
+          description: 'No parameters were passed'
       security:
         -
           scalar: sanctum
@@ -362,12 +366,12 @@ paths:
       security:
         -
           scalar: sanctum
-  /api/pay:
+  /api/user/pay:
     post:
       tags:
         - user
       description: ''
-      operationId: 0f74dd3b764a371aa2a9f0beaa1d9d3a
+      operationId: 6c000a19e786dd686e65e4dde2b54e65
       requestBody:
         content:
           application/json:
@@ -383,7 +387,7 @@ paths:
         '200':
           description: OK
         '400':
-          description: 'Some of parameters are missing'
+          description: 'No parameters were passed'
       security:
         -
           scalar: sanctum

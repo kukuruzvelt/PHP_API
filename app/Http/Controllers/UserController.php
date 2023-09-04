@@ -16,7 +16,7 @@ class UserController extends Controller
         return $request->user();
     }
 
-    #[OA\Post(path: '/api/pay', description: '', security: ["sanctum"], tags: ['user'])]
+    #[OA\Post(path: '/api/user/pay', description: '', security: ["sanctum"], tags: ['user'])]
     #[OA\RequestBody(content: [
         new OA\MediaType(mediaType: 'application/json', schema: new OA\Schema(properties: [
             new OA\Property(property: 'money_amount', description: 'The money amount by which the balance is replenished'
@@ -27,7 +27,7 @@ class UserController extends Controller
             ],))
     ])]
     #[OA\Response(response: 200, description: 'OK')]
-    #[OA\Response(response: 400, description: 'Some of parameters are missing')]
+    #[OA\Response(response: 400, description: 'No parameters were passed')]
     public function pay(Request $request){
         if($request->has('money_amount')){
             $user = User::whereId($request->user()->id)->first();
@@ -35,7 +35,6 @@ class UserController extends Controller
             $user->money =  $money + $request->money_amount;
             $user->save();
         }
-        else return response()->json(data: ['error_message' => trans('messages.some_params_missing')], status: 400);
+        else return response()->json(data: ['error_message' => trans('messages.no_params_passed')], status: 400);
     }
-
 }
