@@ -55,7 +55,7 @@ class OrderController extends Controller
                     $order->user_id = $user->id;
                     $order->city = $request->city;
                     $order->date = $request->date;
-                    $order->status = 'IN PROGRESS';
+                    $order->status = trans('statuses.in_progress');
                     $order->save();
 
                     $cart = Cart::whereUserId($user->id)->get();
@@ -101,7 +101,7 @@ class OrderController extends Controller
             if ($request->has('order_id')) {
                 if (Order::whereId($request->order_id)->exists()) {
                     $order = Order::whereId($request->order_id)->first();
-                    $order->status = "CANCELED";
+                    $order->status = trans('statuses.canceled');
                     $order->save();
                 } else throw new Exception(code: 404);
             } else throw new Exception(code: 400);

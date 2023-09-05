@@ -23,7 +23,7 @@ class OrderFactory extends Factory
             'user_id' => 1,
             'date' => fake()->date(),
             'city' => fake()->city(),
-            'status' => 'IN_PROGRESS',
+            'status' => trans('statuses.in_progress'),
         ];
     }
 }

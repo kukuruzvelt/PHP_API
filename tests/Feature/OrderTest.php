@@ -120,7 +120,7 @@ class OrderTest extends TestCase
         $response = $this->post('/api/order/cancel', ['order_id' => $order_id]);
 
         $response->assertStatus(200);
-        $this->assertEquals('CANCELED', Order::whereId($order_id)->first()->status);
+        $this->assertEquals(trans('statuses.canceled'), Order::whereId($order_id)->first()->status);
     }
 
     public function test_cansel_non_existing_order()
